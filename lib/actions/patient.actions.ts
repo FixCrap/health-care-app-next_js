@@ -1,7 +1,7 @@
 "use server";
 
-//import { ID, InputFile, Query } from "node-appwrite";
 import { ID, Query } from "node-appwrite";
+import { InputFile } from "node-appwrite/file";
 
 import {
 	BUCKET_ID,
@@ -28,9 +28,9 @@ export const createUser = async (user: CreateUserParams) => {
 		);
 
 		return parseStringify(newuser);
-	} catch (error: any) {
+	} catch (error: unknown) {
 		// Check existing user
-		if (error && error?.code === 409) {
+		if (error && (error as { code: number }).code === 409) {
 			const existingUser = await users.list([
 				Query.equal("email", [user.email]),
 			]);
@@ -66,8 +66,12 @@ export const registerPatient = async ({
 		if (identificationDocument) {
 			const inputFile =
 				identificationDocument &&
-				InputFile.fromBlob(
-					identificationDocument?.get("blobFile") as Blob,
+				InputFile.fromBuffer(
+					Buffer.from(
+						await (
+							identificationDocument?.get("blobFile") as Blob
+						).arrayBuffer()
+					),
 					identificationDocument?.get("fileName") as string
 				);
 
